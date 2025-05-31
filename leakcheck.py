@@ -1,3 +1,4 @@
+import sys
 import hashlib
 import requests
 
@@ -34,8 +35,12 @@ def show_manual_email_checks(email: str):
     print(f"2. F-Secure Identity Theft Checker:\n   https://www.f-secure.com/en/identity-theft-checker/email/{email}")
 
 def main():
-    email = input("Digite o e-mail para verificar: ").strip()
-    password = input("Digite a senha para verificar: ").strip()
+    if len(sys.argv) < 3:
+        print("Uso: python leakcheck.py <email> <senha>")
+        sys.exit(1)
+
+    email = sys.argv[1]
+    password = sys.argv[2]
 
     if not email or not password:
         print("⚠️  E-mail e senha são obrigatórios.")

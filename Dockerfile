@@ -1,9 +1,10 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY check_leak.py ./
+COPY requirements.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN pip install requests beautifulsoup4
+COPY leakcheck.py .
 
-CMD ["python", "check_leak.py"]
+ENTRYPOINT ["python", "leakcheck.py"]
