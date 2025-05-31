@@ -1,22 +1,59 @@
-# 🔐 LeakCheck - Verificador de Vazamento de Credenciais
+import sys
+import hashlib
+import requests
 
-Este script em Python realiza uma verificação de segurança básica para saber se uma **senha** ou **e-mail** foi comprometido em vazamentos de dados conhecidos.
+def get_pwned_data(prefix: str) -> list[str]:
+    """Consulta a API do Have I Been Pwned com o prefixo SHA1."""
+    url = f"https://api.pwnedpasswords.com/range/{prefix}"
+    try:
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Erro ao consultar a API do HIBP: {e}")
+        return []
+    return response.text.splitlines()
 
-## 📌 Funcionalidades
+def is_password_compromised(password: str) -> bool:
+    """Verifica se a senha foi exposta em vazamentos."""
+    sha1_hash = hashlib.sha1(password.encode('utf-8')).hexdigest().upper()
+    prefix, suffix = sha1_hash[:5], sha1_hash[5:]
+    leaked_hashes = get_pwned_data(prefix)
 
-- Verifica se uma **senha** foi encontrada em vazamentos públicos usando a API oficial do [Have I Been Pwned (HIBP)](https://haveibeenpwned.com/API/v3#SearchingPwnedPasswordsByRange).
-- Fornece links para verificar **manualmente** se um e-mail foi vazado (Mozilla Monitor e F-Secure).
-- Gera um link para pesquisa adicional no banco de dados da **CyberNews**.
+    for entry in leaked_hashes:
+        hash_suffix, count = entry.split(":")
+        if hash_suffix == suffix:
+            print(f"🔴 Senha encontrada {count} vezes em vazamentos!")
+            return True
 
-## 🛠️ Como Usar
+    print("🟢 Senha NÃO encontrada em vazamentos.")
+    return False
 
-1. **Pré-requisitos:**
-   - Python 3.7+
-   - Biblioteca `requests` instalada:  
-     ```bash
-     pip install requests
-     ```
+def show_manual_email_checks(email: str):
+    """Exibe links para verificar vazamento do e-mail manualmente."""
+    print("\n🔎 Verificação manual para o e-mail:\n")
+    print(f"1. Mozilla Monitor:\n   https://monitor.firefox.com/?email={email}")
+    print(f"2. F-Secure Identity Theft Checker:\n   https://www.f-secure.com/en/identity-theft-checker/email/{email}")
 
-2. **Execução do Script:**
-   ```bash
-   python leakcheck.py <email> <senha>
+def main():
+    if len(sys.argv) < 3:
+        print("Uso: python leakcheck.py <email> <senha>")
+        sys.exit(1)
+
+    email = sys.argv[1]
+    password = sys.argv[2]
+
+    if not email or not password:
+        print("⚠️  E-mail e senha são obrigatórios.")
+        return
+
+    print(f"\n📬 Verificando dados para: {email}")
+    show_manual_email_checks(email)
+
+    print("\n🛡️ Verificando segurança da senha com a base pública do HIBP...")
+    is_password_compromised(password)
+
+    print("\n🧪 Verificação adicional no Cybernews:")
+    print(f"https://cybernews.com/breaches/search/?q={password}")
+
+if __name__ == "__main__":
+    main()
