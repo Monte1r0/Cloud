@@ -20,3 +20,9 @@ Este script em Python realiza uma verificação de segurança básica para saber
 2. **Execução do Script:**
    ```bash
    python leakcheck.py <email> <senha>
+
+
+3. **Execução do Script:**
+   ```Docker
+   docker run -t samuelmonteiroacr.azurecr.io/leakcheck:v1 <email> <senha>
+
